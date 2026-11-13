@@ -149,25 +149,31 @@ class _TikTokVideoPlayerState extends State<TikTokVideoPlayer>
 
   void _toggleLikeOnly() {
     HapticFeedback.lightImpact();
-    final path = widget.videoFile.path;
-    final likes = Set<String>.from(AppSettings.likedVideos.value);
-    if (likes.contains(path)) {
-      likes.remove(path);
-    } else {
-      likes.add(path);
+    AppSettings.toggleLike(widget.videoFile.path);
+  }
+
+  void _toggleSave() {
+    HapticFeedback.lightImpact();
+    final wasSaved = AppSettings.isSaved(widget.videoFile.path);
+    AppSettings.toggleSave(widget.videoFile.path);
+    _showSnack(wasSaved ? 'Removed from saved' : 'Video saved');
+  }
+
+  Future<void> _onProfileTap() async {
+    HapticFeedback.lightImpact();
+    final ok = await AppSettings.pickUserProfilePhoto();
+    if (ok && mounted) {
+      _showSnack('Profile photo updated');
     }
-    AppSettings.likedVideos.value = likes;
   }
 
   void _onDoubleTap() {
     HapticFeedback.mediumImpact();
     setState(() => _showHeart = true);
-    
+
     final path = widget.videoFile.path;
-    final likes = Set<String>.from(AppSettings.likedVideos.value);
-    if (!likes.contains(path)) {
-      likes.add(path);
-      AppSettings.likedVideos.value = likes;
+    if (!AppSettings.isLiked(path)) {
+      AppSettings.toggleLike(path);
     }
 
     _heartController.forward(from: 0).whenComplete(() {
@@ -270,9 +276,12 @@ class _TikTokVideoPlayerState extends State<TikTokVideoPlayer>
     AppSettings.allVideos.value = videos;
 
     final likes = Set<String>.from(AppSettings.likedVideos.value);
-    if (likes.contains(widget.videoFile.path)) {
-      likes.remove(widget.videoFile.path);
+    if (likes.remove(widget.videoFile.path)) {
       AppSettings.likedVideos.value = likes;
+    }
+    final saved = Set<String>.from(AppSettings.savedVideos.value);
+    if (saved.remove(widget.videoFile.path)) {
+      AppSettings.savedVideos.value = saved;
     }
   }
 
@@ -299,41 +308,52 @@ class _TikTokVideoPlayerState extends State<TikTokVideoPlayer>
                 ),
               ),
 
-        if (_isInitialized && !widget.isPipMode)
-          ValueListenableBuilder<Set<String>>(
-            valueListenable: AppSettings.likedVideos,
-            builder: (context, likedSet, child) {
-              final isLiked = likedSet.contains(widget.videoFile.path);
-              return VideoControlsOverlay(
-                controller: _controller,
-                fileLabel: _fileLabel,
-                isLiked: isLiked,
-                onLike: () {
-                  _toggleLikeOnly();
-                },
-                onInfo: () {
-                  _showSnack('File: ${widget.videoFile.path}');
-                },
-                onShare: _onShare,
-                onDelete: _onDelete,
+        // Center tap for pause / double-tap like — kept clear of side actions
+        Align(
+          alignment: Alignment.center,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final w = (constraints.maxWidth * 0.55).clamp(160.0, 220.0);
+              final h = (constraints.maxHeight * 0.45).clamp(220.0, 320.0);
+              return GestureDetector(
+                onTap: _togglePlayback,
+                onDoubleTap: _onDoubleTap,
+                behavior: HitTestBehavior.opaque,
+                child: SizedBox(width: w, height: h),
               );
             },
           ),
-
-        // Small centered territory for pause and double-tap gestures
-        Align(
-          alignment: Alignment.center,
-          child: GestureDetector(
-            onTap: _togglePlayback,
-            onDoubleTap: _onDoubleTap,
-            behavior: HitTestBehavior.opaque,
-            child: Container(
-              width: 250,
-              height: 350,
-              color: Colors.transparent, // Required to receive touch events!
-            ),
-          ),
         ),
+
+        // Side actions above the center tap so Like / Profile always receive taps
+        if (_isInitialized && !widget.isPipMode)
+          ValueListenableBuilder<Set<String>>(
+            valueListenable: AppSettings.likedVideos,
+            builder: (context, likedSet, _) {
+              final isLiked = likedSet.contains(widget.videoFile.path);
+              return ValueListenableBuilder<Set<String>>(
+                valueListenable: AppSettings.savedVideos,
+                builder: (context, savedSet, _) {
+                  final isSaved = savedSet.contains(widget.videoFile.path);
+                  return VideoControlsOverlay(
+                    controller: _controller,
+                    fileLabel: _fileLabel,
+                    isLiked: isLiked,
+                    isSaved: isSaved,
+                    likeCount: isLiked ? 1 : 0,
+                    onLike: _toggleLikeOnly,
+                    onComment: () {
+                      _showSnack('File: ${widget.videoFile.path}');
+                    },
+                    onSave: _toggleSave,
+                    onShare: _onShare,
+                    onDelete: _onDelete,
+                    onProfileTap: _onProfileTap,
+                  );
+                },
+              );
+            },
+          ),
 
         // Pause icon feedback
         IgnorePointer(

@@ -12,28 +12,15 @@ A local offline video player (scrolls like TikTok) with a personal About/Setting
   - Tappable Phone → opens dialer with `0931798929`
   - Partnership box with Tesnim Nuru's photo and name, for orders/collaboration
 
-## How the developer & partner photos work
+## Profile photo (user-uploaded)
 
-Both photos are bundled directly in the app's code (`assets/images/`), **not** uploaded
-from the phone's gallery. That means every person who installs the app sees the exact
-same two pictures — nothing is stored per-device.
+The side avatar on the feed and the **Profile** tab use a photo you pick from your
+gallery. Tap the avatar (+) on a video, or open **Profile → Upload profile photo**.
+The image is saved on the device only (not bundled in the APK).
 
-Right now these are placeholder images:
+Developer / partner photos on the About screen are still bundled assets for branding:
 - `assets/images/img_smia61tj.png` → developer photo (Suleyman Abdu)
-- `assets/images/img_pfpuooh0.png` → partner photo (Tesnim Nuru)
-
-### To update either photo yourself later
-1. Get your real photo as a `.png` (square photos look best, e.g. 400x400).
-2. Replace the corresponding file in `assets/images/` with your new photo.
-   - Easiest: keep the exact same filename so you don't have to touch any code.
-   - Or: give it a new filename and update the matching constant at the top of
-     `lib/main.dart`:
-     ```dart
-     const String kDeveloperPhotoAsset = 'assets/images/YOUR_NEW_FILE.png';
-     const String kPartnerPhotoAsset = 'assets/images/YOUR_NEW_FILE.png';
-     ```
-3. Run `flutter pub get` again (only needed if you changed filenames/added new files).
-4. Rebuild the app (`flutter run` or `flutter build apk`).
+- `assets/images/img_pfpuooh0.png` → partner photo (Tesnim Nuru) / default avatar fallback
 
 ## Project layout note
 

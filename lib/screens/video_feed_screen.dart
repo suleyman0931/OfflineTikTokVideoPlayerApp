@@ -240,23 +240,30 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
             ),
           ),
 
-        // Top-left: brand + video counter
+        // Top brand + counter (offset for menu button / notch)
         if (!_isLoading && !widget.isPipMode)
           Positioned(
-            top: 12,
-            left: 16,
+            top: MediaQuery.paddingOf(context).top + 10,
+            left: 56,
+            right: 56,
             child: Row(
               children: [
-                ShaderMask(
-                  shaderCallback: (bounds) =>
-                      AppColors.brandGradient.createShader(bounds),
-                  child: Text(
-                    'Offline TikTok Player',
-                    style: GoogleFonts.poppins(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      letterSpacing: 0.2,
+                Flexible(
+                  child: ShaderMask(
+                    shaderCallback: (bounds) =>
+                        AppColors.brandGradient.createShader(bounds),
+                    child: Text(
+                      MediaQuery.sizeOf(context).width < 360
+                          ? 'Offline Player'
+                          : 'Offline TikTok Player',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.poppins(
+                        fontSize: MediaQuery.sizeOf(context).width < 360 ? 15 : 18,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        letterSpacing: 0.2,
+                      ),
                     ),
                   ),
                 ),
@@ -265,12 +272,12 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
                   builder: (context, allVideos, child) {
                     if (allVideos.isEmpty) return const SizedBox.shrink();
                     return Padding(
-                      padding: const EdgeInsets.only(left: 10),
+                      padding: const EdgeInsets.only(left: 8),
                       child: _GlassPill(
                         child: Text(
                           '${_currentIndex + 1} / ${allVideos.length}',
                           style: GoogleFonts.inter(
-                            fontSize: 12,
+                            fontSize: 11,
                             fontWeight: FontWeight.w600,
                             color: Colors.white,
                           ),
