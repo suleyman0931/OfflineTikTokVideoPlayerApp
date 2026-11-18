@@ -93,7 +93,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   final ImageProvider image =
                       (path != null && File(path).existsSync())
                           ? FileImage(File(path))
-                          : const AssetImage(Constants.partnerPhotoAsset)
+                          : const AssetImage(Constants.developerPhotoAsset)
                               as ImageProvider;
                   return Column(
                     children: [

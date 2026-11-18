@@ -6,11 +6,11 @@ A local offline video player (scrolls like TikTok) with a personal About/Setting
 - Vertical swipe video feed, auto-plays local `.mp4` files from Camera / Movies / Download folders
 - Tap a video to pause/resume
 - Top-right ⓘ button opens **About & Settings**:
-  - Developer photo and partner photo (bundled in the app itself — see below)
-  - "Developed by Suleyman Abdu"
+  - Developer photo of Suleyman Abdu (bundled in the app itself — see below)
   - Tappable Email → opens mail app addressed to `suleymanabdu0931@gmail.com`
-  - Tappable Phone → opens dialer with `0931798929`
-  - Partnership box with Tesnim Nuru's photo and name, for orders/collaboration
+  - Tappable phone numbers → open dialer with `0931798929` / `0915260722`
+  - Tappable GitHub (`suleyman0931`) and Telegram (`suleyman_abdu`) links
+  - Partnership box for orders/collaboration, with call and Telegram actions
 
 ## Profile photo (user-uploaded)
 
@@ -18,9 +18,8 @@ The side avatar on the feed and the **Profile** tab use a photo you pick from yo
 gallery. Tap the avatar (+) on a video, or open **Profile → Upload profile photo**.
 The image is saved on the device only (not bundled in the APK).
 
-Developer / partner photos on the About screen are still bundled assets for branding:
-- `assets/images/img_smia61tj.png` → developer photo (Suleyman Abdu)
-- `assets/images/img_pfpuooh0.png` → partner photo (Tesnim Nuru) / default avatar fallback
+The developer photo on the About screen is still a bundled asset for branding:
+- `assets/images/img_pfpuooh0.png` → developer photo (Suleyman Abdu) / default avatar fallback
 
 ## Project layout note
 
