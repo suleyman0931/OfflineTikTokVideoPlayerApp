@@ -19,6 +19,8 @@ class VideoControlsOverlay extends StatelessWidget {
   final VoidCallback onShare;
   final VoidCallback onDelete;
   final VoidCallback onProfileTap;
+  final VoidCallback onPlayPause;
+  final VoidCallback onDoubleTapLike;
 
   const VideoControlsOverlay({
     super.key,
@@ -33,6 +35,8 @@ class VideoControlsOverlay extends StatelessWidget {
     required this.onShare,
     required this.onDelete,
     required this.onProfileTap,
+    required this.onPlayPause,
+    required this.onDoubleTapLike,
   });
 
   @override
@@ -49,131 +53,165 @@ class VideoControlsOverlay extends StatelessWidget {
       left: 0,
       right: 0,
       bottom: 0,
-      child: Container(
-        padding: EdgeInsets.fromLTRB(12, 48 * scale, 8, 8 + bottomPad * 0.15),
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.transparent, Colors.black87],
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '@you',
-                        style: GoogleFonts.inter(
-                          color: Colors.white,
-                          fontSize: 15 * scale,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      SizedBox(height: 6 * scale),
-                      Text(
-                        fileLabel,
-                        style: GoogleFonts.inter(
-                          color: Colors.white,
-                          fontSize: 13 * scale,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      SizedBox(height: 8 * scale),
-                      Row(
-                        children: [
-                          Icon(Icons.music_note_rounded,
-                              color: Colors.white, size: 14 * scale),
-                          SizedBox(width: 6 * scale),
-                          Expanded(
-                            child: Text(
-                              'Original Sound',
-                              style: GoogleFonts.inter(
-                                color: Colors.white,
-                                fontSize: 12 * scale,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 8 * scale),
-                    ],
+      child: Stack(
+        children: [
+          // Scrim only — never absorbs taps, so the video stays tappable.
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.transparent, Colors.black87],
                   ),
                 ),
-                SizedBox(width: 8 * scale),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
+              ),
+            ),
+          ),
+          Padding(
+            padding:
+                EdgeInsets.fromLTRB(12, 48 * scale, 8, 8 + bottomPad * 0.15),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    _ProfileAvatar(
-                      radius: avatarR,
-                      onTap: onProfileTap,
+                    Expanded(
+                      child: IgnorePointer(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '@you',
+                              style: GoogleFonts.inter(
+                                color: Colors.white,
+                                fontSize: 15 * scale,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            SizedBox(height: 6 * scale),
+                            Text(
+                              fileLabel,
+                              style: GoogleFonts.inter(
+                                color: Colors.white,
+                                fontSize: 13 * scale,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            SizedBox(height: 8 * scale),
+                            Row(
+                              children: [
+                                Icon(Icons.music_note_rounded,
+                                    color: Colors.white, size: 14 * scale),
+                                SizedBox(width: 6 * scale),
+                                Expanded(
+                                  child: Text(
+                                    'Original Sound',
+                                    style: GoogleFonts.inter(
+                                      color: Colors.white,
+                                      fontSize: 12 * scale,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 8 * scale),
+                          ],
+                        ),
+                      ),
                     ),
-                    SizedBox(height: gap),
-                    _ActionButton(
-                      icon: isLiked
-                          ? Icons.favorite_rounded
-                          : Icons.favorite_outline_rounded,
-                      label: likeCount > 0 ? _formatCount(likeCount) : 'Like',
-                      color: isLiked ? Colors.redAccent : Colors.white,
-                      iconSize: iconSize,
-                      scale: scale,
-                      onTap: onLike,
+                    SizedBox(width: 8 * scale),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Play / pause lives at the top of the right-side rail —
+                        // around the vertical middle of the screen, easy to reach.
+                        ValueListenableBuilder<VideoPlayerValue>(
+                          valueListenable: controller,
+                          builder: (context, value, _) {
+                            final playing = value.isPlaying;
+                            return _ActionButton(
+                              icon: playing
+                                  ? Icons.pause_rounded
+                                  : Icons.play_arrow_rounded,
+                              label: playing ? 'Pause' : 'Play',
+                              iconSize: iconSize + 2,
+                              scale: scale,
+                              onTap: onPlayPause,
+                              onDoubleTap: onDoubleTapLike,
+                            );
+                          },
+                        ),
+                        SizedBox(height: gap),
+                        _ProfileAvatar(
+                          radius: avatarR,
+                          onTap: onProfileTap,
+                        ),
+                        SizedBox(height: gap),
+                        _ActionButton(
+                          icon: isLiked
+                              ? Icons.favorite_rounded
+                              : Icons.favorite_outline_rounded,
+                          label:
+                              likeCount > 0 ? _formatCount(likeCount) : 'Like',
+                          color: isLiked ? Colors.redAccent : Colors.white,
+                          iconSize: iconSize,
+                          scale: scale,
+                          onTap: onLike,
+                        ),
+                        SizedBox(height: gap),
+                        _ActionButton(
+                          icon: Icons.chat_bubble_outline_rounded,
+                          label: 'Info',
+                          iconSize: iconSize,
+                          scale: scale,
+                          onTap: onComment,
+                        ),
+                        SizedBox(height: gap),
+                        _ActionButton(
+                          icon: isSaved
+                              ? Icons.bookmark_rounded
+                              : Icons.bookmark_outline_rounded,
+                          label: isSaved ? 'Saved' : 'Save',
+                          color: isSaved ? Colors.amberAccent : Colors.white,
+                          iconSize: iconSize,
+                          scale: scale,
+                          onTap: onSave,
+                        ),
+                        SizedBox(height: gap),
+                        _ActionButton(
+                          icon: Icons.reply_rounded,
+                          label: 'Share',
+                          iconSize: iconSize,
+                          scale: scale,
+                          onTap: onShare,
+                        ),
+                        SizedBox(height: gap),
+                        _ActionButton(
+                          icon: Icons.delete_outline_rounded,
+                          label: 'Delete',
+                          iconSize: iconSize,
+                          scale: scale,
+                          onTap: onDelete,
+                        ),
+                        SizedBox(height: 12 * scale),
+                        _SpinningVinyl(size: 36 * scale),
+                        SizedBox(height: 8 * scale),
+                      ],
                     ),
-                    SizedBox(height: gap),
-                    _ActionButton(
-                      icon: Icons.chat_bubble_outline_rounded,
-                      label: 'Info',
-                      iconSize: iconSize,
-                      scale: scale,
-                      onTap: onComment,
-                    ),
-                    SizedBox(height: gap),
-                    _ActionButton(
-                      icon: isSaved
-                          ? Icons.bookmark_rounded
-                          : Icons.bookmark_outline_rounded,
-                      label: isSaved ? 'Saved' : 'Save',
-                      color: isSaved ? Colors.amberAccent : Colors.white,
-                      iconSize: iconSize,
-                      scale: scale,
-                      onTap: onSave,
-                    ),
-                    SizedBox(height: gap),
-                    _ActionButton(
-                      icon: Icons.reply_rounded,
-                      label: 'Share',
-                      iconSize: iconSize,
-                      scale: scale,
-                      onTap: onShare,
-                    ),
-                    SizedBox(height: gap),
-                    _ActionButton(
-                      icon: Icons.delete_outline_rounded,
-                      label: 'Delete',
-                      iconSize: iconSize,
-                      scale: scale,
-                      onTap: onDelete,
-                    ),
-                    SizedBox(height: 12 * scale),
-                    _SpinningVinyl(size: 36 * scale),
-                    SizedBox(height: 8 * scale),
                   ],
                 ),
+                _VideoProgressBar(controller: controller),
               ],
             ),
-            _VideoProgressBar(controller: controller),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -205,10 +243,11 @@ class _ProfileAvatar extends StatelessWidget {
             ValueListenableBuilder<String?>(
               valueListenable: AppSettings.userProfilePhotoPath,
               builder: (context, path, _) {
-                final ImageProvider image = (path != null && File(path).existsSync())
-                    ? FileImage(File(path))
-                    : const AssetImage('assets/images/img_pfpuooh0.png')
-                        as ImageProvider;
+                final ImageProvider image =
+                    (path != null && File(path).existsSync())
+                        ? FileImage(File(path))
+                        : const AssetImage('assets/images/img_pfpuooh0.png')
+                            as ImageProvider;
                 return Container(
                   padding: const EdgeInsets.all(1.5),
                   decoration: const BoxDecoration(
@@ -283,7 +322,8 @@ class _SpinningVinylState extends State<_SpinningVinyl>
             height: widget.size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white24, width: widget.size * 0.2),
+              border:
+                  Border.all(color: Colors.white24, width: widget.size * 0.2),
               image: DecorationImage(image: image, fit: BoxFit.cover),
             ),
           );
@@ -320,6 +360,7 @@ class _ActionButton extends StatelessWidget {
   final double iconSize;
   final double scale;
   final VoidCallback onTap;
+  final VoidCallback? onDoubleTap;
 
   const _ActionButton({
     required this.icon,
@@ -328,6 +369,7 @@ class _ActionButton extends StatelessWidget {
     required this.iconSize,
     required this.scale,
     required this.onTap,
+    this.onDoubleTap,
   });
 
   @override
@@ -336,6 +378,7 @@ class _ActionButton extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
+        onDoubleTap: onDoubleTap,
         borderRadius: BorderRadius.circular(24),
         child: Padding(
           padding: EdgeInsets.symmetric(

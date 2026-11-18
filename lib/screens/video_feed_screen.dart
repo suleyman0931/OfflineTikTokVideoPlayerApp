@@ -12,8 +12,9 @@ import '../widgets/tiktok_video_player.dart';
 class VideoFeedScreen extends StatefulWidget {
   final bool isTutorialActive;
   final bool isPipMode;
-  
-  const VideoFeedScreen({super.key, this.isTutorialActive = false, this.isPipMode = false});
+
+  const VideoFeedScreen(
+      {super.key, this.isTutorialActive = false, this.isPipMode = false});
 
   @override
   State<VideoFeedScreen> createState() => _VideoFeedScreenState();
@@ -43,10 +44,10 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
       _isLoading = true;
       _errorMessage = '';
     });
-    
+
     if (Platform.isAndroid) {
       bool permissionGranted = false;
-      
+
       // Try requesting general storage first (works on Android 12 and below)
       var status = await Permission.storage.request();
       if (status.isGranted) {
@@ -84,6 +85,7 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
           AppSettings.allVideos.removeListener(onVideoFound);
         }
       }
+
       AppSettings.allVideos.addListener(onVideoFound);
     }
   }
@@ -135,8 +137,6 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
     );
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -169,16 +169,18 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
                     onPageChanged: (i) {
                       HapticFeedback.selectionClick();
                       setState(() => _currentIndex = i);
-                      
+
                       // Check if last video
                       if (i == allVideos.length - 1) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: const Text("You've reached the end of the feed!"),
+                            content: const Text(
+                                "You've reached the end of the feed!"),
                             duration: const Duration(seconds: 2),
                             backgroundColor: AppColors.surfaceAlt,
                             behavior: SnackBarBehavior.floating,
-                            margin: const EdgeInsets.only(bottom: 70, left: 16, right: 16),
+                            margin: const EdgeInsets.only(
+                                bottom: 70, left: 16, right: 16),
                           ),
                         );
                       }
@@ -187,7 +189,8 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
                       return TikTokVideoPlayer(
                         key: ValueKey(allVideos[index].path),
                         videoFile: allVideos[index],
-                        isActive: _currentIndex == index && !widget.isTutorialActive,
+                        isActive:
+                            _currentIndex == index && !widget.isTutorialActive,
                         isAutoScrollEnabled: autoScrollEnabled,
                         isPipMode: widget.isPipMode,
                         onVideoEnded: () {
@@ -245,7 +248,7 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
           Positioned(
             top: MediaQuery.paddingOf(context).top + 10,
             left: 56,
-            right: 56,
+            right: 168,
             child: Row(
               children: [
                 Flexible(
@@ -253,13 +256,14 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
                     shaderCallback: (bounds) =>
                         AppColors.brandGradient.createShader(bounds),
                     child: Text(
-                      MediaQuery.sizeOf(context).width < 360
+                      MediaQuery.sizeOf(context).width < 400
                           ? 'Offline Player'
                           : 'Offline TikTok Player',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.poppins(
-                        fontSize: MediaQuery.sizeOf(context).width < 360 ? 15 : 18,
+                        fontSize:
+                            MediaQuery.sizeOf(context).width < 400 ? 15 : 18,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
                         letterSpacing: 0.2,
@@ -358,7 +362,8 @@ class _BrandedLoaderState extends State<_BrandedLoader>
                   gradient: AppColors.brandGradient,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 36),
+                child: const Icon(Icons.play_arrow_rounded,
+                    color: Colors.white, size: 36),
               ),
             ),
             const SizedBox(height: 20),
@@ -373,7 +378,8 @@ class _BrandedLoaderState extends State<_BrandedLoader>
             const SizedBox(height: 6),
             Text(
               'Loading your videos…',
-              style: GoogleFonts.inter(fontSize: 13, color: AppColors.textSecondary),
+              style: GoogleFonts.inter(
+                  fontSize: 13, color: AppColors.textSecondary),
             ),
           ],
         ),
@@ -446,7 +452,8 @@ class _GradientButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  const _GradientButton({required this.icon, required this.label, required this.onTap});
+  const _GradientButton(
+      {required this.icon, required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {

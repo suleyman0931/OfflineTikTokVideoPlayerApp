@@ -11,6 +11,7 @@ import 'video_feed_screen.dart';
 import 'library_screen.dart';
 import 'liked_videos_screen.dart';
 import 'profile_screen.dart';
+import 'search_screen.dart';
 import '../widgets/developer_drawer.dart';
 import '../widgets/tutorial_overlay.dart';
 
@@ -25,14 +26,15 @@ class _MainNavigationState extends State<MainNavigation> {
   int _currentIndex = 0;
   bool _showTutorial = false;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  final GlobalKey _videoFeedKey = GlobalKey(); // Preserves state during PiP mode switches
+  final GlobalKey _videoFeedKey =
+      GlobalKey(); // Preserves state during PiP mode switches
   DateTime? _lastBackPressTime;
 
   @override
   void initState() {
     super.initState();
     _checkTutorial();
-    
+
     // Enable auto Picture-in-Picture mode on supported devices (Android 12+)
     try {
       SimplePip().setAutoPipMode().catchError((_) {
@@ -60,13 +62,28 @@ class _MainNavigationState extends State<MainNavigation> {
     });
   }
 
+  Future<void> _toggleOrientation() async {
+    HapticFeedback.lightImpact();
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+    await SystemChrome.setPreferredOrientations(
+      isLandscape
+          ? const [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]
+          : const [
+              DeviceOrientation.landscapeLeft,
+              DeviceOrientation.landscapeRight
+            ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return PipWidget(
       pipLayout: PipActionsLayout.mediaOnlyPause,
       onPipAction: (action) {
         AppSettings.pipActionNotifier.value = action;
-        Future.delayed(Duration.zero, () => AppSettings.pipActionNotifier.value = null);
+        Future.delayed(
+            Duration.zero, () => AppSettings.pipActionNotifier.value = null);
       },
       pipChild: Scaffold(
         backgroundColor: Colors.black,
@@ -76,10 +93,11 @@ class _MainNavigationState extends State<MainNavigation> {
         canPop: false,
         onPopInvoked: (didPop) {
           if (didPop) return;
-          
+
           final now = DateTime.now();
           if (_lastBackPressTime == null ||
-              now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
+              now.difference(_lastBackPressTime!) >
+                  const Duration(seconds: 2)) {
             _lastBackPressTime = now;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -101,7 +119,8 @@ class _MainNavigationState extends State<MainNavigation> {
               IndexedStack(
                 index: _currentIndex,
                 children: [
-                  VideoFeedScreen(key: _videoFeedKey, isTutorialActive: _showTutorial),
+                  VideoFeedScreen(
+                      key: _videoFeedKey, isTutorialActive: _showTutorial),
                   const LibraryScreen(),
                   const LibraryScreen(),
                   const LikedVideosScreen(),
@@ -123,14 +142,39 @@ class _MainNavigationState extends State<MainNavigation> {
                 Positioned(
                   top: MediaQuery.paddingOf(context).top + 8,
                   right: 12,
-                  child: _GlassIconButton(
-                    icon: Icons.picture_in_picture_alt_rounded,
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      try {
-                        SimplePip().enterPipMode();
-                      } catch (_) {}
-                    },
+                  child: Row(
+                    children: [
+                      _GlassIconButton(
+                        icon: Icons.search_rounded,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const SearchScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      _GlassIconButton(
+                        icon: MediaQuery.of(context).orientation ==
+                                Orientation.landscape
+                            ? Icons.stay_current_portrait_rounded
+                            : Icons.screen_rotation_rounded,
+                        onTap: _toggleOrientation,
+                      ),
+                      const SizedBox(width: 8),
+                      _GlassIconButton(
+                        icon: Icons.picture_in_picture_alt_rounded,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          try {
+                            SimplePip().enterPipMode();
+                          } catch (_) {}
+                        },
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -191,7 +235,8 @@ class _MainNavigationState extends State<MainNavigation> {
                             ),
                           ],
                         ),
-                        child: const Icon(Icons.add, color: Colors.black, size: 22),
+                        child: const Icon(Icons.add,
+                            color: Colors.black, size: 22),
                       ),
                     ),
                     _BottomNavItem(

@@ -34,7 +34,6 @@ class _TikTokVideoPlayerState extends State<TikTokVideoPlayer>
     with SingleTickerProviderStateMixin {
   late VideoPlayerController _controller;
   bool _isInitialized = false;
-  bool _showPauseIcon = false;
   bool _showHeart = false;
 
   late final AnimationController _heartController = AnimationController(
@@ -53,7 +52,7 @@ class _TikTokVideoPlayerState extends State<TikTokVideoPlayer>
       widget.videoFile,
       videoPlayerOptions: VideoPlayerOptions(allowBackgroundPlayback: true),
     );
-    
+
     AppSettings.pipActionNotifier.addListener(_onPipActionReceived);
 
     // Delay initialization slightly so that PageView scroll animations don't stutter
@@ -64,7 +63,7 @@ class _TikTokVideoPlayerState extends State<TikTokVideoPlayer>
         setState(() => _isInitialized = true);
         _controller.setLooping(!widget.isAutoScrollEnabled);
         _controller.setVolume(1.0);
-        
+
         _controller.addListener(_videoListener);
 
         if (widget.isActive) {
@@ -79,18 +78,16 @@ class _TikTokVideoPlayerState extends State<TikTokVideoPlayer>
 
   void _onPipActionReceived() {
     if (!mounted || !widget.isActive || !_isInitialized) return;
-    
+
     final action = AppSettings.pipActionNotifier.value;
     if (action == null) return;
-    
+
     final actionString = action.toString();
-    
+
     if (actionString.contains('play')) {
       _controller.play();
-      if (mounted) setState(() => _showPauseIcon = false);
     } else if (actionString.contains('pause')) {
       _controller.pause();
-      if (mounted) setState(() => _showPauseIcon = true);
     }
   }
 
@@ -109,7 +106,6 @@ class _TikTokVideoPlayerState extends State<TikTokVideoPlayer>
     if (_isInitialized) {
       if (widget.isActive && !oldWidget.isActive) {
         _controller.play();
-        _showPauseIcon = false;
       } else if (!widget.isActive && oldWidget.isActive) {
         _controller.pause();
       }
@@ -130,17 +126,14 @@ class _TikTokVideoPlayerState extends State<TikTokVideoPlayer>
   }
 
   void _togglePlayback() {
+    if (!_isInitialized) return;
     HapticFeedback.selectionClick();
-    setState(() {
-      if (_controller.value.isPlaying) {
-        _controller.pause();
-        _showPauseIcon = true;
-      } else {
-        _controller.play();
-        _showPauseIcon = false;
-      }
-    });
-    
+    if (_controller.value.isPlaying) {
+      _controller.pause();
+    } else {
+      _controller.play();
+    }
+
     // Sync with OS Picture-in-Picture icon
     try {
       SimplePip().setIsPlaying(_controller.value.isPlaying);
@@ -196,7 +189,8 @@ class _TikTokVideoPlayerState extends State<TikTokVideoPlayer>
   }
 
   void _onShare() {
-    Share.shareXFiles([XFile(widget.videoFile.path)], text: 'Check out this video!');
+    Share.shareXFiles([XFile(widget.videoFile.path)],
+        text: 'Check out this video!');
   }
 
   Future<void> _onDelete() async {
@@ -204,7 +198,8 @@ class _TikTokVideoPlayerState extends State<TikTokVideoPlayer>
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Delete Video', style: TextStyle(color: Colors.white)),
+        title:
+            const Text('Delete Video', style: TextStyle(color: Colors.white)),
         content: const Text(
           'Are you sure you want to permanently delete this video from your device?',
           style: TextStyle(color: Colors.white70),
@@ -292,13 +287,21 @@ class _TikTokVideoPlayerState extends State<TikTokVideoPlayer>
       fit: StackFit.expand,
       children: [
         // Background video layer
+        // Portrait videos fill the screen like TikTok. Square / landscape
+        // videos are letterboxed instead of being cropped.
         _isInitialized
-            ? FittedBox(
-                fit: BoxFit.cover,
-                child: SizedBox(
-                  width: _controller.value.size.width,
-                  height: _controller.value.size.height,
-                  child: VideoPlayer(_controller),
+            ? ColoredBox(
+                color: Colors.black,
+                child: FittedBox(
+                  fit: _controller.value.size.width >=
+                          _controller.value.size.height
+                      ? BoxFit.contain
+                      : BoxFit.cover,
+                  child: SizedBox(
+                    width: _controller.value.size.width,
+                    height: _controller.value.size.height,
+                    child: VideoPlayer(_controller),
+                  ),
                 ),
               )
             : const Center(
@@ -308,20 +311,12 @@ class _TikTokVideoPlayerState extends State<TikTokVideoPlayer>
                 ),
               ),
 
-        // Center tap for pause / double-tap like — kept clear of side actions
-        Align(
-          alignment: Alignment.center,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final w = (constraints.maxWidth * 0.55).clamp(160.0, 220.0);
-              final h = (constraints.maxHeight * 0.45).clamp(220.0, 320.0);
-              return GestureDetector(
-                onTap: _togglePlayback,
-                onDoubleTap: _onDoubleTap,
-                behavior: HitTestBehavior.opaque,
-                child: SizedBox(width: w, height: h),
-              );
-            },
+        // Tap anywhere on the video to pause/play, double-tap to like
+        Positioned.fill(
+          child: GestureDetector(
+            onTap: _togglePlayback,
+            onDoubleTap: _onDoubleTap,
+            behavior: HitTestBehavior.opaque,
           ),
         ),
 
@@ -349,27 +344,13 @@ class _TikTokVideoPlayerState extends State<TikTokVideoPlayer>
                     onShare: _onShare,
                     onDelete: _onDelete,
                     onProfileTap: _onProfileTap,
+                    onPlayPause: _togglePlayback,
+                    onDoubleTapLike: _onDoubleTap,
                   );
                 },
               );
             },
           ),
-
-        // Pause icon feedback
-        IgnorePointer(
-          child: AnimatedOpacity(
-            opacity: _showPauseIcon ? 1 : 0,
-            duration: const Duration(milliseconds: 180),
-            child: Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.35),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 46),
-            ),
-          ),
-        ),
 
         // Double-tap heart burst
         IgnorePointer(

@@ -27,6 +27,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final crossAxisCount = width >= 900 ? 6 : (width >= 600 ? 5 : 3);
+
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: AppBar(
@@ -85,8 +88,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
           return GridView.builder(
             padding: const EdgeInsets.all(2),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
               crossAxisSpacing: 2,
               mainAxisSpacing: 2,
               childAspectRatio: 9 / 16,
@@ -99,7 +102,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => _LibraryVideoFeedScreen(
+                      builder: (context) => LibraryVideoFeedScreen(
                         videos: filteredVideos,
                         initialIndex: index,
                       ),
@@ -117,20 +120,21 @@ class _LibraryScreenState extends State<LibraryScreen> {
 }
 
 /// Full-screen TikTok-style scrollable feed for library videos
-class _LibraryVideoFeedScreen extends StatefulWidget {
+class LibraryVideoFeedScreen extends StatefulWidget {
   final List<File> videos;
   final int initialIndex;
 
-  const _LibraryVideoFeedScreen({
+  const LibraryVideoFeedScreen({
+    super.key,
     required this.videos,
     required this.initialIndex,
   });
 
   @override
-  State<_LibraryVideoFeedScreen> createState() => _LibraryVideoFeedScreenState();
+  State<LibraryVideoFeedScreen> createState() => _LibraryVideoFeedScreenState();
 }
 
-class _LibraryVideoFeedScreenState extends State<_LibraryVideoFeedScreen> {
+class _LibraryVideoFeedScreenState extends State<LibraryVideoFeedScreen> {
   late final PageController _pageController;
   late int _currentIndex;
 
@@ -217,7 +221,8 @@ class _LibraryVideoFeedScreenState extends State<_LibraryVideoFeedScreen> {
                 ),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.4),
                     borderRadius: BorderRadius.circular(20),

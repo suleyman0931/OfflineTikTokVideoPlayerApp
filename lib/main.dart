@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import 'screens/main_navigation.dart';
 import 'utils/app_settings.dart';
@@ -7,10 +6,6 @@ import 'utils/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
   await AppSettings.ensurePrefsLoaded();
   runApp(const OfflineTikTokPlayer());
 }
